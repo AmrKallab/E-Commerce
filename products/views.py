@@ -6,12 +6,15 @@ from rest_framework.response import Response
 from .serializers import ProductSerializer,CategorySerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-
+from .permissions import IsAdminOrReadOnly
 
 
 class CategoryList(APIView) :
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
+
     def get(self,request) :
         queryset = Category.objects.all() 
         serializer = self.serializer_class(queryset,many=True)
@@ -26,7 +29,7 @@ class CategoryList(APIView) :
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class CategoryDetail(APIView) :
-    
+    permission_classes = [IsAdminOrReadOnly]
     
     def get_object(self,pk) :
         try :
@@ -37,6 +40,7 @@ class CategoryDetail(APIView) :
             
     def get(self,request,pk) :
         queryset = self.get_object(pk)
+        
         if queryset is None :
 
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -93,7 +97,8 @@ class CategoryDetail(APIView) :
 
 
 class ProductList(APIView) :
-
+    permission_classes = [IsAdminOrReadOnly]
+    
     def get(self,request) :
         queryset = Product.objects.filter(is_active = True)
         serializer = ProductSerializer(queryset,many = True)
@@ -111,7 +116,7 @@ class ProductList(APIView) :
     
 
 class ProductDetail(APIView) :
-
+    permission_classes = [IsAdminOrReadOnly]
     
     def get_object(self,pk) :
         try :
@@ -161,8 +166,6 @@ class ProductDetail(APIView) :
 
         if queryset is None :
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
-     
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
