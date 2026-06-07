@@ -1,0 +1,30 @@
+from rest_framework import serializers
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    subtotal = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    class Meta :
+        fields = [
+            "id",
+            "product",
+            "product_name",
+            "price",
+            "quantity",
+            "subtotal",
+        ]
+
+class OrderSerializer(serializers.ModelSerializer) :
+    items = OrderItemSerializer(many=True ,read_only=True)
+
+    class Meta :
+        fields = [
+            "id",
+            "status",
+            "total_price",
+            "items",
+            "created_at"]
+        
