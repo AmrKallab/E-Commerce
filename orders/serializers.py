@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-
+from .models import Order,OrderItem
 class OrderItemSerializer(serializers.ModelSerializer):
     subtotal = serializers.DecimalField(
         max_digits=10,
@@ -28,3 +28,5 @@ class OrderSerializer(serializers.ModelSerializer) :
             "items",
             "created_at"]
         
+class OrderStatusUpdateSerializer(serializers.Serializer) :
+    status = serializers.ChoiceField(choices=Order.Status.choices)
