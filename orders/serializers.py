@@ -15,6 +15,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "price",
             "quantity",
             "subtotal",
+            "payment_method",            
         ]
 
 class OrderSerializer(serializers.ModelSerializer) :
