@@ -7,7 +7,6 @@ class ShippingSerializer(serializers.ModelSerializer) :
         model = Shipping 
         fields = [
             "id",
-            "full_name",
             "phone",
             "city",
             "street",

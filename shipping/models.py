@@ -9,6 +9,7 @@ class Shipping(models.Model) :
     phone = models.CharField(max_length=256)
     city = models.CharField(max_length=256)
     address = models.CharField(max_length=256)
+    street = models.CharField(max_length=256)
     building = models.CharField(max_length=256)
     apartment = models.CharField(max_length=256)
 

@@ -15,7 +15,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "price",
             "quantity",
             "subtotal",
-            "payment_method",            
+            "payment_method",
+            "shipping_address",         
         ]
 
 class OrderSerializer(serializers.ModelSerializer) :
@@ -27,7 +28,15 @@ class OrderSerializer(serializers.ModelSerializer) :
             "status",
             "total_price",
             "items",
-            "created_at"]
+            "created_at"
+            ]
         
 class OrderStatusUpdateSerializer(serializers.Serializer) :
     status = serializers.ChoiceField(choices=Order.Status.choices)
+
+
+class CreateOrderSerializer(serializers.Serializer) :
+    shipping_address_id = serializers.IntegerField()
+    payment_method = serializers.ChoiceField(
+        choices=Order.PaymentMethod.choices
+    )

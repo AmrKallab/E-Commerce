@@ -3,5 +3,7 @@ from .views import ShippingAddressListCreateAPIView , ShippingAddressDetailAPIVi
 
 
 urlpatterns = [
+    path('addresses',ShippingAddressListCreateAPIView.as_view(),name="shipping-address-list-create"),
+    path('addresses<int:pk>',ShippingAddressDetailAPIView.as_view(),name="shipping-address-detail"),
 
 ]
