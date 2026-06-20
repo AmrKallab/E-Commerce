@@ -1,6 +1,8 @@
 from rest_framework import serializers
-
 from .models import Order,OrderItem
+from shipping.serializers import ShippingSerializer
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
     subtotal = serializers.DecimalField(
         max_digits=10,
@@ -21,10 +23,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer) :
     items = OrderItemSerializer(many=True ,read_only=True)
+    Shipping = ShippingSerializer(many=True ,read_only=True)
 
     class Meta :
         fields = [
             "id",
+            "shipping"
             "status",
             "total_price",
             "items",
