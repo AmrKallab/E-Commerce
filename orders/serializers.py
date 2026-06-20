@@ -28,8 +28,9 @@ class OrderSerializer(serializers.ModelSerializer) :
     class Meta :
         fields = [
             "id",
-            "shipping"
+            "shipping",
             "status",
+            "payment_status",
             "total_price",
             "items",
             "created_at"
