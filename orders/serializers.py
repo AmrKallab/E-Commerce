@@ -33,3 +33,6 @@ class OrderSerializer(serializers.ModelSerializer) :
         
 class OrderStatusUpdateSerializer(serializers.Serializer) :
     status = serializers.ChoiceField(choices=Order.Status.choices)
+
+class CreateOrderSerializer(serializers.Serializer) :
+    shipping_address_id = serializers.IntegerField()

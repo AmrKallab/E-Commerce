@@ -9,22 +9,33 @@ from rest_framework.permissions import IsAuthenticated , IsAdminUser
 from cart.models import Cart
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderStatusUpdateSerializer
-
+from shipping.models import ShippingAddress
+from .serializers import CreateOrderSerializer
 
 class CreateOrderAPIView(APIView) :
     permission_classes = [IsAuthenticated]
-    def post(self,request,pk):
+    def post(self,request):
+        serializer = CreateOrderSerializer(data=request.data) 
+        if not serializer.is_valid() :
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        shipping_address_id = serializer.validated_data["shipping_address_id"]
+
+        try : 
+            shipping_address = ShippingAddress.objects.get(id=shipping_address_id,user=request.user)
+
+        except ShippingAddress.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         try :
             cart = Cart.objects.get(user=request.user)
         except Cart.DoesNotExist :
-            return None 
-
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         cart_item = cart.items.select_related("product").all()
         if not cart_item.exists() :
             return Response({"detail" : "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic() :
-            order = Order.objects.create(user=request.user,status=Order.Status.PENDING,total_price=0) 
+            order = Order.objects.create(user=request.user,status=Order.Status.PENDING,shipping_address=shipping_address,total_price=0) 
 
             total_price = 0
             for item in cart_item :
@@ -37,8 +48,8 @@ class CreateOrderAPIView(APIView) :
                 product.save()
                 total_price += item.quantity * product.price 
                 order.total_price = total_price
-                order.save()
-                cart.items.all().delete()
+            order.save()
+            cart.items.all().delete()
             serializer = OrderSerializer(order)
             return Response(serializer.data,status =status.HTTP_200_OK)
 
