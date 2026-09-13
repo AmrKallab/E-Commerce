@@ -47,7 +47,8 @@ class ShippingAddressDetailAPIView(APIView):
         serializer = ShippingAddressSerializer(shippingaddress)
 
         return Response(serializer.data,status=status.HTTP_200_OK)
-
+# PUT   → تحديث كامل للـ resource
+# PATCH → تحديث جزئي
     def put(self,request,pk) :
 
         shippingaddress = self.get_object(pk,request) 
@@ -63,10 +64,18 @@ class ShippingAddressDetailAPIView(APIView):
         
         shippingaddress = self.get_object(pk,request) 
 
-        serializer = ShippingAddressSerializer(shippingaddress,data=request.data) 
+        serializer = ShippingAddressSerializer(shippingaddress,data=request.data,partial=True) 
         if serializer.is_valid() :
             serializer.save() 
             return Response(serializer.data,status = status.HTTP_201_CREATED)
         
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-        
+
+    def delete(self,request,pk) :
+        shippingaddress = self.get_object(pk,request) 
+
+        shippingaddress.delete()
+
+        return Response(status = status.HTTP_204_NO_CONTENT)
+
+    
