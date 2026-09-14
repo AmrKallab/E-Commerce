@@ -21,12 +21,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer) :
     items = OrderItemSerializer(many=True ,read_only=True)
     shipping_address = ShippingAddressSerializer(read_only=True)
+    payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices)
 
     class Meta :
         fields = [
             "id",
             "status",
             "shipping_address",
+            "payment_method",
             "total_price",
             "items",
             "created_at"]
@@ -34,5 +36,7 @@ class OrderSerializer(serializers.ModelSerializer) :
 class OrderStatusUpdateSerializer(serializers.Serializer) :
     status = serializers.ChoiceField(choices=Order.Status.choices)
 
-class CreateOrderSerializer(serializers.Serializer) :
+class CreateOrderSerializer(serializers.Serializer):
     shipping_address_id = serializers.IntegerField()
+
+    payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices)

@@ -3,7 +3,7 @@ from django.db import models
 class Category(models.Model) :
     name = models.CharField(max_length=256)
     description = models.TextField(blank=True)
-    class meta :
+    class Meta :
         ordering = ['name']
 
     def __str__(self):
@@ -22,7 +22,7 @@ class Product(models.Model) :
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-    class meta :
+    class Meta :
         ordering = ['-created_at']
 
     def __str__(self):

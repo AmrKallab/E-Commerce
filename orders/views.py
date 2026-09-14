@@ -19,6 +19,8 @@ class CreateOrderAPIView(APIView) :
         if not serializer.is_valid() :
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         shipping_address_id = serializer.validated_data["shipping_address_id"]
+        payment_method = serializer.validated_data["payment_method"]
+        
 
         try : 
             shipping_address = ShippingAddress.objects.get(id=shipping_address_id,user=request.user)
@@ -35,7 +37,9 @@ class CreateOrderAPIView(APIView) :
             return Response({"detail" : "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic() :
-            order = Order.objects.create(user=request.user,status=Order.Status.PENDING,shipping_address=shipping_address,total_price=0) 
+            order = Order.objects.create(user=request.user,status=Order.Status.PENDING,
+                                        shipping_address=shipping_address,payment_method=payment_method
+                                        total_price=0) 
 
             total_price = 0
             for item in cart_item :
