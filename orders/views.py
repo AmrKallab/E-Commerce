@@ -1,3 +1,4 @@
+
 from urllib import request
 
 from django.db import transaction
@@ -38,7 +39,7 @@ class CreateOrderAPIView(APIView) :
 
         with transaction.atomic() :
             order = Order.objects.create(user=request.user,status=Order.Status.PENDING,
-                                        shipping_address=shipping_address,payment_method=payment_method
+                                        shipping_address=shipping_address,payment_method=payment_method,
                                         total_price=0) 
 
             total_price = 0
@@ -109,6 +110,8 @@ class AdminOrderStatusUpdateAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         order.status = serializer.validated_data["status"]
+        if order.status == Order.status.Deliverd and order.payment_method == Order.PaymentMethod.CASH_ON_DELIVERY :
+            order.payment_method = Order.status.PAID
         order.save()
 
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)

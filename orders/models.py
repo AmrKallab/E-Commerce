@@ -4,6 +4,7 @@ from products.models import Product
 from shipping.models import ShippingAddress
 # Create your models here.
 class Order(models.Model) :
+    #payment_status , order_status method choices 
     class Status(models.TextChoices) :
         PENDING = "pending", "Pending"
         PAID = "paid", "Paid"
