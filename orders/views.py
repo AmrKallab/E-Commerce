@@ -38,8 +38,11 @@ class CreateOrderAPIView(APIView) :
             return Response({"detail" : "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic() :
-            order = Order.objects.create(user=request.user,status=Order.Status.PENDING,
-                                        shipping_address=shipping_address,payment_method=payment_method,
+            order = Order.objects.create(user=request.user,
+                                        status=Order.Status.PENDING,
+                                        shipping_address=shipping_address,
+                                        payment_method=payment_method,
+                                        paymet_status=Order.payment_status.UNPAID,
                                         total_price=0) 
 
             total_price = 0
@@ -47,7 +50,8 @@ class CreateOrderAPIView(APIView) :
                 product = item.product 
                 if item.quantity > product.stock :
                     transaction.set_rollback(True)
-                    return Response({"detail" : f"Not enough stock for {product.name}"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"detail" : f"Not enough stock for {product.name}"},
+                                     status=status.HTTP_400_BAD_REQUEST)
                 OrderItem.objects.create(order=order,product=product,quantity=item.quantity,price=product.price)
                 product.stock -= item.quantity
                 product.save()
@@ -91,6 +95,30 @@ class AdminOrderListAPIView(APIView):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+ALLOWED_ORDER_TRANSITIONS = {
+    Order.Status.PENDING: [
+        Order.Status.CONFIRMED,
+        Order.Status.CANCELLED,
+    ],
+
+    Order.Status.CONFIRMED: [
+        Order.Status.PROCESSING,
+        Order.Status.CANCELLED,
+    ],
+
+    Order.Status.PROCESSING: [
+        Order.Status.SHIPPED,
+        Order.Status.CANCELLED,
+    ],
+
+    Order.Status.SHIPPED: [
+        Order.Status.DELIVERED,
+    ],
+
+    Order.Status.DELIVERED: [],
+
+    Order.Status.CANCELLED: [],
+}
 
 class AdminOrderStatusUpdateAPIView(APIView):
     permission_classes = [IsAdminUser]
@@ -109,7 +137,15 @@ class AdminOrderStatusUpdateAPIView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        order.status = serializer.validated_data["status"]
+        
+        new_status = serializer.validated_data["status"]
+        allowed_statuses = ALLOWED_ORDER_TRANSITIONS.get(new_status,[])
+        if new_status not in allowed_statuses:
+            return Response(
+            {"detail": (f"Cannot change order status " f"from {order.status} to {new_status}.")},
+            status=status.HTTP_400_BAD_REQUEST)
+        order.status = new_status 
+        
         if order.status == Order.status.Deliverd and order.payment_method == Order.PaymentMethod.CASH_ON_DELIVERY :
             order.payment_method = Order.status.PAID
         order.save()

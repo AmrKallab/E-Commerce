@@ -15,12 +15,19 @@ class Order(models.Model) :
     class PaymentMethod(models.TextChoices):
         CASH_ON_DELIVERY = "cash_on_delivery", "Cash on Delivery"
         STRIPE = "stripe", "Stripe"
+
+    class PaymentStatus(models.TextChoices) :
+        UNPAID = "unpaid", "Unpaid"
+        PAID = "paid", "Paid"
+        FAILED = "failed", "Failed"
+        REFUNDED = "refunded", "Refunded"
         
     status = models.CharField(max_length = 20 , choices = Status.choices , default=Status.PENDING)
     user = models.ForeignKey(settings.AUTH_USER_MODEL , on_delete = models.CASCADE,related_name="orders") 
     created_at = models.DateTimeField(auto_now_add = True)
     total_price = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     payment_method = models.CharField(max_length=30,choices=PaymentMethod.choices,default=PaymentMethod.CASH_ON_DELIVERY)
+    payment_status = models.CharField(max_length=20,choices=PaymentStatus.choices,default=PaymentStatus.UNPAID)
     shipping_address = models.ForeignKey(ShippingAddress,on_delete=models.SET_NULL,related_name="orders",null=True,blank=True)
 
 
