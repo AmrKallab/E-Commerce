@@ -20,8 +20,8 @@ class CartAPIView(APIView) :
     def get(self,request) :
         cart,created = Cart.objects.get_or_create(user=request.user) 
         serializer = CartSerializer(cart) 
-        if serializer.is_valid() :
-            return Response(serializer.data,status = status.HTTP_200_OK)
+        
+        return Response(serializer.data,status = status.HTTP_200_OK)
         
    
 
@@ -44,7 +44,7 @@ class AddToCartAPIView(APIView):
         except Product.DoesNotExist :
             return Response({'error':'Product not found'},status=status.HTTP_404_NOT_FOUND)
         
-        if quantity > Product.stock :
+        if quantity > product.stock :
             return Response({'error':'Insufficient stock'},status=status.HTTP_400_BAD_REQUEST)
         
         cart,created = Cart.objects.get_or_create(user=request.user)

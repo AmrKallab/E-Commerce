@@ -5,9 +5,10 @@ from shipping.models import ShippingAddress
 # Create your models here.
 class Order(models.Model) :
     #payment_status , order_status method choices 
-    class Status(models.TextChoices) :
+    class Status(models.TextChoices):
         PENDING = "pending", "Pending"
-        PAID = "paid", "Paid"
+        CONFIRMED = "confirmed", "Confirmed"
+        PROCESSING = "processing", "Processing"
         SHIPPED = "shipped", "Shipped"
         DELIVERED = "delivered", "Delivered"
         CANCELLED = "cancelled", "Cancelled"

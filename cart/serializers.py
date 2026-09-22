@@ -22,7 +22,7 @@ class CartSerializer(serializers.ModelSerializer) :
     
     class Meta :
         model = Cart 
-        fields = ['id','product_name','proudct_price','quantity','total_price']
+        fields = ['id','product_name','product_price','subtotal']
 
 
     
@@ -33,8 +33,8 @@ class CartItemSerializer(serializers.ModelSerializer) :
     total_price = serializers.DecimalField(source='get_total_price',max_digits=10,decimal_places=2,read_only=True)
     class Meta : 
         model = CartItem 
-        fields = ['id','user','item','total_price','created_at']
-        read_fields = ['user','created_at']
+        fields = ['id','item','total_price','added_at']
+        read_fields = ['user','added_at']
 
     
 class AddToCartSerializer(serializers.Serializer) :
