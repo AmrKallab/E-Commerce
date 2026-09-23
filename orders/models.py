@@ -48,6 +48,6 @@ class OrderItem(models.Model) :
         return f"{self.quantity} x {self.product.name} in Order #{self.order.id}"
     
     @property
-    def total_price(self) :
+    def subtotal(self) :
         return self.quantity * self.price 
     

@@ -8,6 +8,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         read_only=True
     )
     class Meta :
+        model = OrderItem
         fields = [
             "id",
             "product",
@@ -15,7 +16,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "price",
             "quantity",
             "subtotal",
-            "payment_method",            
+                      
         ]
 
 class OrderSerializer(serializers.ModelSerializer) :
@@ -24,6 +25,7 @@ class OrderSerializer(serializers.ModelSerializer) :
     payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices)
 
     class Meta :
+        model = Order
         fields = [
             "id",
             "status",
