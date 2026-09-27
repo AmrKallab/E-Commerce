@@ -98,6 +98,10 @@ class AdminOrderListAPIView(APIView):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+#الفكرة أن الـ dictionary يجيب عن سؤال:
+
+#إذا كان الطلب في الحالة الحالية، إلى أي حالات يسمح له بالانتقال؟
+
 ALLOWED_ORDER_TRANSITIONS = {
     Order.Status.PENDING: [
         Order.Status.CONFIRMED,
@@ -148,7 +152,8 @@ class AdminOrderStatusUpdateAPIView(APIView):
             {"detail": (f"Cannot change order status " f"from {order.status} to {new_status}.")},
             status=status.HTTP_400_BAD_REQUEST)
         order.status = new_status 
-        
+        # if order.status == Order.status.cancelled :
+        #     for 
         if order.status == Order.status.Deliverd and order.payment_method == Order.PaymentMethod.CASH_ON_DELIVERY :
             order.payment_method = Order.status.PAID
         order.save()
