@@ -12,58 +12,104 @@ from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderStatusUpdateSerializer
 from shipping.models import ShippingAddress
 from .serializers import CreateOrderSerializer
+from products.models import Product , Category 
 
-class CreateOrderAPIView(APIView) :
+class CreateOrderAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self,request):
-        serializer = CreateOrderSerializer(data=request.data) 
-        if not serializer.is_valid() :
-            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        serializer = CreateOrderSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         shipping_address_id = serializer.validated_data["shipping_address_id"]
         payment_method = serializer.validated_data["payment_method"]
-        
 
-        try : 
-            shipping_address = ShippingAddress.objects.get(id=shipping_address_id,user=request.user)
-
+        # 1. Check shipping address
+        try:
+            shipping_address = ShippingAddress.objects.get(
+                id=shipping_address_id,
+                user=request.user
+            )
         except ShippingAddress.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Shipping address not found."},status=status.HTTP_404_NOT_FOUND)
 
-        try :
+        # 2. Get user's cart
+        try:
             cart = Cart.objects.get(user=request.user)
-        except Cart.DoesNotExist :
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        cart_item = cart.items.select_related("product").all()
-        if not cart_item.exists() :
-            return Response({"detail" : "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+        except Cart.DoesNotExist:
+            return Response({"detail": "Cart not found."},status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic() :
+        cart_items = cart.items.select_related("product").all()
+
+        if not cart_items.exists():
+            return Response({"detail": "Cart is empty."},status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Start checkout transaction
+        with transaction.atomic():
+
+            locked_products = {}
+
+            # 4. Lock and validate ALL products first
+            for item in cart_items:
+
+                product = Product.objects.select_for_update().get(pk=item.product_id)
+
+                if item.quantity > product.stock:
+                    transaction.set_rollback(True)
+
+                    return Response({"detail":f"Not enough stock for {product.name}."},status=status.HTTP_400_BAD_REQUEST)
+
+                locked_products[item.product_id] = product
+
+            # 5. Only after validation create the order
             order = Order.objects.create(
-                                user=request.user,
-                                status=Order.Status.PENDING,
-                                shipping_address=shipping_address,
-                                payment_method=payment_method,
-                                payment_status=Order.PaymentStatus.UNPAID,
-                                total_price=0
-                            )
-            
+                user=request.user,
+                status=Order.Status.PENDING,
+                shipping_address=shipping_address,
+                payment_method=payment_method,
+                payment_status=Order.PaymentStatus.UNPAID,
+                total_price=0
+            )
 
             total_price = 0
-            for item in cart_item :
-                product = item.product 
-                if item.quantity > product.stock :
-                    transaction.set_rollback(True)
-                    return Response({"detail" : f"Not enough stock for {product.name}"},
-                                     status=status.HTTP_400_BAD_REQUEST)
-                OrderItem.objects.create(order=order,product=product,quantity=item.quantity,price=product.price)
+
+            # 6. Create OrderItems and decrease stock
+            for item in cart_items:
+
+                product = locked_products[item.product_id]
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    product_name=product.name,
+                    quantity=item.quantity,
+                    price=product.price
+                )
+
                 product.stock -= item.quantity
-                product.save()
-                total_price += item.quantity * product.price 
-                order.total_price = total_price
-            order.save()
+
+                product.save(update_fields=["stock"])
+
+                total_price += item.quantity * product.price
+
+            # 7. Save final total
+            order.total_price = total_price
+
+            order.save(update_fields=["total_price"])
+
+            # 8. Clear cart
             cart.items.all().delete()
-            serializer = OrderSerializer(order)
-            return Response(serializer.data,status =status.HTTP_200_OK)
+
+        # Transaction committed here
+
+        serializer = OrderSerializer(order)
+
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
 class OrderListAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -146,16 +192,25 @@ class AdminOrderStatusUpdateAPIView(APIView):
 
         
         new_status = serializer.validated_data["status"]
+
         allowed_statuses = ALLOWED_ORDER_TRANSITIONS.get(new_status,[])
         if new_status not in allowed_statuses:
             return Response(
             {"detail": (f"Cannot change order status " f"from {order.status} to {new_status}.")},
             status=status.HTTP_400_BAD_REQUEST)
-        order.status = new_status 
-        # if order.status == Order.status.cancelled :
-        #     for 
-        if order.status == Order.status.Deliverd and order.payment_method == Order.PaymentMethod.CASH_ON_DELIVERY :
-            order.payment_method = Order.status.PAID
-        order.save()
+        
+        with transaction.atomic() :
+            if new_status == Order.Status.CANCELLED:
+                for item in order.items.select_related("product"):
+                    if item.product:
+#select_for_update() داخل transaction.atomic() يقوم بقفل صف المنتج في قاعدة البيانات حتى تنتهي الـ transaction.
+                        product = Product.objects.select_for_update().get(pk=item.product_id)
+                        item.product.stock += item.quantity
+                        item.product.save()
+            order.status = new_status 
+
+            if order.status == Order.status.Deliverd and order.payment_method == Order.PaymentMethod.CASH_ON_DELIVERY :
+                order.payment_method = Order.status.PAID
+            order.save()
 
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
