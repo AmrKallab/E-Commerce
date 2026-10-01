@@ -18,7 +18,7 @@ class CategoryList(APIView) :
     def get(self,request) :
         queryset = Category.objects.all() 
         serializer = self.serializer_class(queryset,many=True)
-        return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data,status=status.HTTP_200_OK)
     
     def post(self,request) :
         serializer = CategorySerializer(data = request.data) 
@@ -40,10 +40,10 @@ class CategoryDetail(APIView) :
             
     def get(self,request,pk) :
         queryset = self.get_object(pk)
+            
+        if queryset is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         
-        if queryset is None :
-
-            return Response(status=status.HTTP_400_BAD_REQUEST)
         serializer = CategorySerializer(queryset)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -144,7 +144,7 @@ class ProductDetail(APIView) :
 
         if serializer.is_valid() :
             serializer.save()
-            return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+            return Response(serializer.data,status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
     def patch(self,request,pk) :
@@ -157,7 +157,7 @@ class ProductDetail(APIView) :
                                        partial=True) 
         if serializer.is_valid() :
             serializer.save()
-            return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+            return Response(serializer.data,status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
     
