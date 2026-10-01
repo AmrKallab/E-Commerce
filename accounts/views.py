@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 class RegisterAPIView(APIView) :
     
     def post(self,request) :
-        serializer = RegisterSerializer(data=request.data) 
+        serializer = RegisterSerializer(data=request.user) 
         if serializer.is_valid() :
             user = serializer.save()
             return Response({"user" :{

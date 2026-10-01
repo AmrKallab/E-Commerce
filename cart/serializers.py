@@ -24,10 +24,6 @@ class CartSerializer(serializers.ModelSerializer) :
         model = Cart 
         fields = ['id','product_name','product_price','subtotal']
 
-
-    
-
-
 class CartItemSerializer(serializers.ModelSerializer) :
     item = CartSerializer(read_only=True,many=True)
     total_price = serializers.DecimalField(source='get_total_price',max_digits=10,decimal_places=2,read_only=True)

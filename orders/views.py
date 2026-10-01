@@ -146,7 +146,7 @@ class AdminOrderStatusUpdateAPIView(APIView):
 
         
         new_status = serializer.validated_data["status"]
-        allowed_statuses = ALLOWED_ORDER_TRANSITIONS.get(new_status,[])
+        allowed_statuses = ALLOWED_ORDER_TRANSITIONS.get(order.status,[])
         if new_status not in allowed_statuses:
             return Response(
             {"detail": (f"Cannot change order status " f"from {order.status} to {new_status}.")},

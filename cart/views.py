@@ -48,7 +48,7 @@ class AddToCartAPIView(APIView):
             return Response({'error':'Insufficient stock'},status=status.HTTP_400_BAD_REQUEST)
         
         cart,created = Cart.objects.get_or_create(user=request.user)
-        cart_item,created = CartItem.objects.get_or_create(cart=cart,product=product)
+        cart_item,created = CartItem.objects.get_or_create(cart=cart,product=product,defaults={"quantity": quantity})
         if not created:
             new_quantity = cart_item.quantity + quantity
 
@@ -70,7 +70,7 @@ class UpdateCartItemAPIView(APIView) :
     
     def get_object(self,request,pk) :
         try :
-            cart_item = CartItem.objects.get(id=pk,cart__user=request.user)
+            return CartItem.objects.get(id=pk, cart__user=request.user)
         
         except CartItem.DoesNotExist :
             return None
